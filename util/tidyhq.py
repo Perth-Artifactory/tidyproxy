@@ -198,7 +198,9 @@ def fresh_cache(cache=None, config=None, force=False) -> dict[str, Any]:
         return cache
 
 
-def push_to_files(tidyhq_cache: dict, config: dict, directory: str = "serve") -> None:
+def push_to_files(
+    tidyhq_cache: dict, config: dict, logger: logging.Logger, directory: str = "serve"
+) -> None:
     """Process the cache and write to the appropriate files"""
 
     # Contacts

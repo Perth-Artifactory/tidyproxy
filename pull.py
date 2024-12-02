@@ -15,6 +15,7 @@ urllib3_logger = logging.getLogger("urllib3")
 urllib3_logger.setLevel(logging.INFO)
 setup_logger = logging.getLogger("setup")
 proc_logger = logging.getLogger("processing")
+post_logger = logging.getLogger("post")
 
 
 # Look for --force flag
@@ -65,6 +66,9 @@ tidyhq_cache = tidyhq.fresh_cache(config=config)
 setup_logger.info(
     f"TidyHQ cache set up: {len(tidyhq_cache['contacts'])} contacts, {len(tidyhq_cache['groups'])} groups"
 )
+# The cache pulled direct from TidyHQ is a touch different to the cache stored in teh file since JSON can't use ints as keys.
+# This is a bit of a hack to make sure the cache is always the same format
+tidyhq_cache = tidyhq.fresh_cache(config=config)
 
 # Set up folder structure if it doesn't exist yet
 if not os.path.exists("serve"):
@@ -87,4 +91,16 @@ for folder in [
 
 
 # Process the cache and write it to /serve
-tidyhq.push_to_files(tidyhq_cache=tidyhq_cache, config=config, directory="serve")
+tidyhq.push_to_files(
+    tidyhq_cache=tidyhq_cache, config=config, directory="serve", logger=proc_logger
+)
+
+# Write the raw cache to /serve/cache.json
+with open("serve/cache.json", "w") as f:
+    json.dump(tidyhq_cache, f, indent=2)
+    proc_logger.info("Cache written to serve/cache.json")
+
+# Remove pull.lock file
+post_logger.info("Removing pull.lock")
+os.remove("pull.lock")
+post_logger.info("Pull complete")
